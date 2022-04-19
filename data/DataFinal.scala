@@ -1,4 +1,4 @@
-package edu.neu.coe.csye7200.csv
+package model
 
 import org.apache.spark.sql.SparkSession
 import org.slf4j.impl.StaticLoggerBinder
