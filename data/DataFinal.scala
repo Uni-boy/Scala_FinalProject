@@ -1,4 +1,5 @@
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions._
 
 object DataFinal{
   def main(args: Array[String]) {
@@ -17,10 +18,9 @@ object DataFinal{
      *  Create new dataframe userData(userId, gameName, behaviorTime)
      */
     val dataFrame = spark.read.option("delimiter", ",").option("header", "true").csv("steam-200k.csv")
-    val user = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time") + 1)
-      .where("behavior_name = 'play'")
     val schemas = Seq("userId", "gameName", "behaviorTime")
-    val userData = user.toDF(schemas: _*)
+    var userData = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time") + 1)
+      .where("behavior_name = 'play'").toDF(schemas: _*)
 
     /**
      *  Read steam.csv
@@ -28,30 +28,38 @@ object DataFinal{
      *  Create new dataframe gameData(gameName, gameTags, gameRating)
      */
     val df = spark.read.option("delimiter", ",").option("header", "true").csv("steam.csv")
-    val game = df.select(df("name"), df("genres"),
-      df("positive_ratings") * 10/(df("positive_ratings") + df("negative_ratings")))
-    val schema = Seq("gameName", "gameTags", "gameRating")
-    val gameData = game.toDF(schema: _*)
+    val schema = Seq("gameName", "gameTags", "ratingCount", "gameRating")
+    var gameData = df.select(df("name"), df("genres"), df("positive_ratings") + df("negative_ratings"),
+      df("positive_ratings") * 10/(df("positive_ratings") + df("negative_ratings"))).toDF(schema: _*)
+
+    userData = userData.join(gameData, userData("gameName") === gameData("gameName"), "leftsemi")
+    userData.show()
+    gameData = gameData.join(userData, userData("gameName") === gameData("gameName"), "leftsemi")
+    gameData.show()
+    println(userData.count()) //result: 36289 (valid user data)
+    println(gameData.count()) //result: 1724  (valid game data)
 
     /**
-    // inner join
-    val inner_join = dataFrame.join(df).where(dataFrame("playapp_name") === df("app_name"))
-    //inner_join.show(false)
-    // val result3 = inner_join.describe().show()  跑这个要两个半小时
+     * TODO: separate userData to 70% train data and 30% test data
+     */
 
-    //选出inner-join里review表的几列
-    val review01 = inner_join.select("user id", "playapp_name", "type", "time")
-    review01.show()
-    // distinct去重
-    val review02 = review01.distinct()
-    review02.show()
+    /**
+     *
+     */
+    var gameData_rate = gameData.orderBy(desc("gameRating"))
+    //gameData_rate = gameData_rate.groupBy("gameTags")
+    gameData_rate.show()
+    var gameData_player = gameData.orderBy(desc("ratingCount"))
+    //gameData_player = gameData_player.groupBy("gameTags")
 
+    /**
     //df转csv
     review02.coalesce(1)
       .write.format("com.databricks.spark.csv")
       .option("header", "true")
       .save("chenye/desktop/data.csv")
-**/
+    **/
+
   }
 
 }
