@@ -17,10 +17,11 @@ case class User(userId: Int, gameName: String, behaviorTime: Int)
  * User Dataset: steam.csv
  *
  * gameName         name
- * gameTags          genres
+ * gameTags         genres
+ * ratingCount      positive_ratings+negative_ratings
  * gameRating       positive_ratings/rating_sum
  */
-case class Game(gameName: String, gameTags: String, gameRating: Double)
+case class Game(gameName: String, gameTags: String, ratingCount: Long, gameRating: Double)
 
 /**
  * @param uri MongoDB connection
