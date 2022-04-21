@@ -8,8 +8,8 @@ object DataFinal{
       .builder()
       .appName("dataPreprocess")
       .master("local[*]")
-      .config("spark.mongodb.read.connection.uri", "mongodb://mongodb://127.0.0.1/test.myCollection")
-      .config("spark.mongodb.write.connection.uri", "mongodb://mongodb://127.0.0.1/test.myCollection")
+      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/testdb")
+      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/testdb")
       .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
       .getOrCreate()
 
@@ -59,10 +59,15 @@ object DataFinal{
      */
 
     /**
-     * save dataframe to .csv:
-     *
+     * save dataframe to mongoDB
      */
-    //trainingSet.repartition(1).write.format("csv").option("header", "true").csv("processedDataset/trainingSet.csv")
+    import com.mongodb.spark._
+    import com.mongodb.spark.config._
+    import org.bson.Document
+
+    MongoSpark.save(trainingSet.write.option("collection", "training").mode("overwrite"))
+    println("Reading from the 'training' collection:")
+    //MongoSpark.load[Character](SparkSession, ReadConfig(Map("collection" -> "training"), Some(ReadConfig(SparkSession)))).show()
 
   }
 
