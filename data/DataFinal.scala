@@ -15,9 +15,6 @@ object DataFinal{
 
     spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
 
-    val df1 = spark.read.format("org.mongodb.spark.sql.DefaultSource").load()
-    df1.printSchema()
-
     /**
      *  Read steam-200k.csv
      *  Get and merge columns from steam-200k.csv
