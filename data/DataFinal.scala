@@ -8,9 +8,15 @@ object DataFinal{
       .builder()
       .appName("dataPreprocess")
       .master("local[*]")
+      .config("spark.mongodb.read.connection.uri", "mongodb://mongodb://127.0.0.1/test.myCollection")
+      .config("spark.mongodb.write.connection.uri", "mongodb://mongodb://127.0.0.1/test.myCollection")
+      .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
       .getOrCreate()
 
     spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
+
+    val df1 = spark.read.format("org.mongodb.spark.sql.DefaultSource").load()
+    df1.printSchema()
 
     /**
      *  Read steam-200k.csv
@@ -40,25 +46,26 @@ object DataFinal{
     println(gameData.count()) //result: 1724  (valid game data)
 
     /**
-     * TODO: separate userData to 70% train data and 30% test data
+     * Separate userData to 70% train data and 30% test data
      */
+    val splitData = userData.randomSplit(Array(0.7, 0.3))
+    val trainingSet = splitData(0)
+    val testSet = splitData(1)
 
     /**
-     *
-     */
     var gameData_rate = gameData.orderBy(desc("gameRating"))
     //gameData_rate = gameData_rate.groupBy("gameTags")
     gameData_rate.show()
     var gameData_player = gameData.orderBy(desc("ratingCount"))
     //gameData_player = gameData_player.groupBy("gameTags")
+    gameData_player.show()
+     */
 
     /**
-    //df转csv
-    review02.coalesce(1)
-      .write.format("com.databricks.spark.csv")
-      .option("header", "true")
-      .save("chenye/desktop/data.csv")
-    **/
+     * save dataframe to .csv:
+     *
+     */
+    //trainingSet.repartition(1).write.format("csv").option("header", "true").csv("processedDataset/trainingSet.csv")
 
   }
 
