@@ -46,28 +46,22 @@ object DataFinal{
      * Separate userData to 70% train data and 30% test data
      */
     val splitData = userData.randomSplit(Array(0.7, 0.3))
-    val trainingSet = splitData(0)
+    val trainSet = splitData(0)
     val testSet = splitData(1)
 
     /**
-    var gameData_rate = gameData.orderBy(desc("gameRating"))
-    //gameData_rate = gameData_rate.groupBy("gameTags")
-    gameData_rate.show()
-    var gameData_player = gameData.orderBy(desc("ratingCount"))
-    //gameData_player = gameData_player.groupBy("gameTags")
-    gameData_player.show()
-     */
-
-    /**
-     * save dataframe to mongoDB
+     * save dataframe to mongoDB:
+     * Training.collection   userData to train
+     * Test.collection       userData to test
+     * Game.collection       gameData
      */
     import com.mongodb.spark._
     import com.mongodb.spark.config._
     import org.bson.Document
 
-    MongoSpark.save(trainingSet.write.option("collection", "training").mode("overwrite"))
-    println("Reading from the 'training' collection:")
-    //MongoSpark.load[Character](SparkSession, ReadConfig(Map("collection" -> "training"), Some(ReadConfig(SparkSession)))).show()
+    MongoSpark.save(trainSet.write.option("collection", "train").mode("overwrite"))
+    MongoSpark.save(testSet.write.option("collection", "test").mode("overwrite"))
+    MongoSpark.save(gameData.write.option("collection", "game").mode("overwrite"))
 
   }
 
