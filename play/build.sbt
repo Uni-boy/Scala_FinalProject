@@ -1,15 +1,21 @@
-name := "play"
+name := "play-swagger-reactivemongo"
 
-version := "1.0"
+version := "1.0-SNAPSHOT"
 
-lazy val `play` = (project in file(".")).enablePlugins(PlayScala)
+lazy val root = (project in file(".")).enablePlugins(PlayScala)
 
-resolvers += "Akka Snapshot Repository" at "https://repo.akka.io/snapshots/"
+scalaVersion := "2.12.12"
 
-scalaVersion := "2.13.8"
+val reactiveMongoVer = "1.0.0-play26"
 
-libraryDependencies ++= Seq(jdbc, ehcache, ws, specs2 % Test, guice)
-libraryDependencies += "org.apache.spark" % "spark-core_2.13" % "3.2.0"
-libraryDependencies += "org.apache.spark" % "spark-streaming_2.13" % "3.2.0"
-libraryDependencies += "org.apache.spark" % "spark-sql_2.13" % "3.2.0"
-libraryDependencies += "org.mongodb" % "casbah_2.12" % "3.1.1"
+libraryDependencies ++= Seq(
+  guice,
+  "org.reactivemongo"      %% "play2-reactivemongo" % reactiveMongoVer,
+  "io.swagger"             %% "swagger-play2"       % "1.7.1",
+  "org.webjars"            %  "swagger-ui"          % "3.22.2",
+  "org.scalatestplus.play" %% "scalatestplus-play"  % "5.0.0-M2" % Test
+)
+
+import play.sbt.routes.RoutesKeys
+
+RoutesKeys.routesImport += "play.modules.reactivemongo.PathBindables._"
