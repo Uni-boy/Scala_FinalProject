@@ -20,7 +20,7 @@ object DataFinal{
      *  Get and merge columns from steam-200k.csv
      *  Create new dataframe userData(userId, gameName, behaviorTime)
      */
-    val dataFrame = spark.read.option("delimiter", ",").option("header", "true").csv("steam-200k.csv")
+    val dataFrame = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam-200k.csv")
     val schemas = Seq("userId", "gameName", "behaviorTime")
     var userData = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time") + 1)
       .where("behavior_name = 'play'").toDF(schemas: _*)
@@ -30,7 +30,7 @@ object DataFinal{
      *  Get columns and process data from steam.csv
      *  Create new dataframe gameData(gameName, gameTags, gameRating)
      */
-    val df = spark.read.option("delimiter", ",").option("header", "true").csv("steam.csv")
+    val df = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam.csv")
     val schema = Seq("gameName", "gameTags", "ratingCount", "gameRating")
     var gameData = df.select(df("name"), df("genres"), df("positive_ratings") + df("negative_ratings"),
       df("positive_ratings") * 10/(df("positive_ratings") + df("negative_ratings"))).toDF(schema: _*)

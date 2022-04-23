@@ -1,4 +1,4 @@
-name := "data"
+name := "dataPreprocess"
 
 scalaVersion := "2.12.2"
 
