@@ -22,30 +22,49 @@ object DataFinal{
      */
     val dataFrame = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam-200k.csv")
     val schemas = Seq("userId", "gameName", "behaviorTime")
-    var userData = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time") + 1)
+    val userData = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time") + 1)
       .where("behavior_name = 'play'").toDF(schemas: _*)
 
     /**
      *  Read steam.csv
      *  Get columns and process data from steam.csv
-     *  Create new dataframe gameData(gameName, gameTags, gameRating)
+     *  Create new dataframe gameData(gameName, gameTags, gameRating, ID)
      */
     val df = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam.csv")
     val schema = Seq("gameName", "gameTags", "ratingCount", "gameRating")
     var gameData = df.select(df("name"), df("genres"), df("positive_ratings") + df("negative_ratings"),
       df("positive_ratings") * 10/(df("positive_ratings") + df("negative_ratings"))).toDF(schema: _*)
+    gameData = gameData.withColumn("id", monotonically_increasing_id)
 
-    userData = userData.join(gameData, userData("gameName") === gameData("gameName"), "leftsemi")
-    userData.show()
+    /**
+     * TrainSet and TestSet Schema:
+     * - id(gameId)
+     * - gameName
+     * - userId
+     * - behaviorTime(Preference)
+     */
+    val userBehavior = userData.as("temp1").join(gameData.as("temp2"), userData("gameName") === gameData("gameName"), "inner")
+      .select(col("temp2.id"), col("temp1.gameName"), col("temp1.userId"), col("temp1.behaviorTime"))
+    userBehavior.show()
+
+    /**
+     * Game Schema:
+     * - gameName
+     * - gameTags
+     * - ratingCount
+     * - gameRating
+     * - id(gameId)
+     */
     gameData = gameData.join(userData, userData("gameName") === gameData("gameName"), "leftsemi")
     gameData.show()
-    println(userData.count()) //result: 36289 (valid user data)
+
+    println(userBehavior.count()) //result: 36302 (valid user data)
     println(gameData.count()) //result: 1724  (valid game data)
 
     /**
      * Separate userData to 70% train data and 30% test data
      */
-    val splitData = userData.randomSplit(Array(0.7, 0.3))
+    val splitData = userBehavior.orderBy(rand()).randomSplit(Array(0.7, 0.3))
     val trainSet = splitData(0)
     val testSet = splitData(1)
 
