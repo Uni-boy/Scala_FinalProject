@@ -33,8 +33,11 @@ object Als {
 
     val trainData = train.map(x => Rating(x._1, x._2, x._3))
 
-    val (rank, iterations, lambda) = (150, 5, 0.01)
-    val model = ALS.train(trainData, rank, iterations, lambda)
+    val model = new ALS()
+      .setRank(100)
+      .setIterations(5)
+      .setLambda(0.01)
+      .run(trainData)
 
     val test = spark.read.format("com.mongodb.spark.sql.DefaultSource")
       .option("uri", "mongodb://localhost:27017/testdb.test")
@@ -53,6 +56,20 @@ object Als {
       case Rating(userId, id, behaviorTime) => ((userId, id), behaviorTime)
     }
 
+    val originAndPreds = test.map{
+      case (userId, id, behaviorTime) => ((userId, id), behaviorTime)
+    }.join(predictions)
+
+    val originAndPredsDF = originAndPreds.toDF
+
+    originAndPredsDF.show()
+
+    val MSE = originAndPreds.map { case ((userid, id), (r1, r2)) =>
+      val err = (r1 - r2)
+      err * err
+    }.mean()
+
+    println(MSE)
 
   }
 
