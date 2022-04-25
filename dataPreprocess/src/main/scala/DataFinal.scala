@@ -30,11 +30,13 @@ object DataFinal{
      *  Get columns and process data from steam.csv
      *  Create new dataframe gameData(gameName, gameTags, gameRating, ID)
      */
+    import org.apache.spark.sql.types.IntegerType
+
     val df = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam.csv")
     val schema = Seq("gameName", "gameTags", "ratingCount", "gameRating")
     var gameData = df.select(df("name"), df("genres"), df("positive_ratings") + df("negative_ratings"),
       df("positive_ratings") * 10/(df("positive_ratings") + df("negative_ratings"))).toDF(schema: _*)
-    gameData = gameData.withColumn("id", monotonically_increasing_id)
+    gameData = gameData.withColumn("id", monotonically_increasing_id).withColumn("id", col("id").cast(IntegerType))
 
     /**
      * TrainSet and TestSet Schema:
@@ -43,8 +45,9 @@ object DataFinal{
      * - userId
      * - behaviorTime(Preference)
      */
-    val userBehavior = userData.as("temp1").join(gameData.as("temp2"), userData("gameName") === gameData("gameName"), "inner")
+    val user = userData.as("temp1").join(gameData.as("temp2"), userData("gameName") === gameData("gameName"), "inner")
       .select(col("temp2.id"), col("temp1.gameName"), col("temp1.userId"), col("temp1.behaviorTime"))
+    val userBehavior = user.withColumn("userId", col("userId").cast(IntegerType))
     userBehavior.show()
 
     /**
