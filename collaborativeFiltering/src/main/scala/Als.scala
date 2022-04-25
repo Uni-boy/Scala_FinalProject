@@ -1,12 +1,11 @@
 import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.mllib.recommendation.ALS
 import org.apache.spark.sql.types.LongType
 import com.mongodb.spark.MongoSpark
 
-case class User(id: Int, userId: Int, behaviorTime: Double)
+case class User(userId: Int, id: Int, behaviorTime: Double)
 
-object Als{
+object Als {
   def main(args: Array[String]): Unit = {
 
     val spark: SparkSession = SparkSession
@@ -28,7 +27,7 @@ object Als{
       .drop("gameName")
       .as[User]
       .rdd
-      .map(user => (user.id, user.userId, user.behaviorTime))
+      .map(user => (user.userId, user.id, user.behaviorTime))
 
     import org.apache.spark.mllib.recommendation.Rating
 
@@ -44,8 +43,15 @@ object Als{
       .drop("gameName")
       .as[User]
       .rdd
-      .map(user => (user.id, user.userId, user.behaviorTime))
+      .map(user => (user.userId, user.id, user.behaviorTime))
 
+    val testData = test.map {
+      case (userId, id, behaviorTime) => (userId, id)
+    }
+
+    val predictions = model.predict(testData).map {
+      case Rating(userId, id, behaviorTime) => ((userId, id), behaviorTime)
+    }
 
 
   }
