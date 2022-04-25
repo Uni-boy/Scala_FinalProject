@@ -3,7 +3,7 @@ import org.apache.spark.mllib.recommendation.ALS
 import org.apache.spark.sql.types.LongType
 import com.mongodb.spark.MongoSpark
 
-case class User(userId: Int, id: Int, behaviorTime: Double)
+case class User(userId: Int, id: Int, purchase: Double)
 
 object Als {
   def main(args: Array[String]): Unit = {
@@ -24,10 +24,9 @@ object Als {
     val train = MongoSpark
       .load(spark)
       .drop("_id")
-      .drop("gameName")
       .as[User]
       .rdd
-      .map(user => (user.userId, user.id, user.behaviorTime))
+      .map(user => (user.userId, user.id, user.purchase))
 
     import org.apache.spark.mllib.recommendation.Rating
 
@@ -40,24 +39,23 @@ object Als {
       .run(trainData)
 
     val test = spark.read.format("com.mongodb.spark.sql.DefaultSource")
-      .option("uri", "mongodb://localhost:27017/testdb.test")
+      .option("uri", "mongodb://localhost:27017/testdb.validation")
       .load()
       .drop("_id")
-      .drop("gameName")
       .as[User]
       .rdd
-      .map(user => (user.userId, user.id, user.behaviorTime))
+      .map(user => (user.userId, user.id, user.purchase))
 
     val testData = test.map {
-      case (userId, id, behaviorTime) => (userId, id)
+      case (userId, id, purchase) => (userId, id)
     }
 
     val predictions = model.predict(testData).map {
-      case Rating(userId, id, behaviorTime) => ((userId, id), behaviorTime)
+      case Rating(userId, id, purchase) => ((userId, id), purchase)
     }
 
     val originAndPreds = test.map{
-      case (userId, id, behaviorTime) => ((userId, id), behaviorTime)
+      case (userId, id, purchase) => ((userId, id), purchase)
     }.join(predictions)
 
     val originAndPredsDF = originAndPreds.toDF

@@ -15,22 +15,24 @@ object DataFinal{
 
     spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
 
+    import spark.implicits._
+
     /**
      *  Read steam-200k.csv
      *  Get and merge columns from steam-200k.csv
-     *  Create new dataframe userData(userId, gameName, behaviorTime)
+     *  Create new dataframe userData(userId, gameName, purchase)
      */
     val dataFrame = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam-200k.csv")
-    val schemas = Seq("userId", "gameName", "behaviorTime")
-    val userData = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time") + 1)
-      .where("behavior_name = 'play'").toDF(schemas: _*)
+    val schemas = Seq("userId", "gameName", "purchase")
+    val userData = dataFrame.select(dataFrame("user_id"), dataFrame("name"), dataFrame("time"))
+      .where("behavior_name = 'purchase'").toDF(schemas: _*)
 
     /**
      *  Read steam.csv
      *  Get columns and process data from steam.csv
      *  Create new dataframe gameData(gameName, gameTags, gameRating, ID)
      */
-    import org.apache.spark.sql.types.IntegerType
+    import org.apache.spark.sql.types.{IntegerType, DoubleType}
 
     val df = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam.csv")
     val schema = Seq("gameName", "gameTags", "ratingCount", "gameRating")
@@ -40,14 +42,15 @@ object DataFinal{
 
     /**
      * TrainSet and TestSet Schema:
-     * - id(gameId)
-     * - gameName
-     * - userId
-     * - behaviorTime(Preference)
+     * - id(gameId): Int
+     * - gameName: String
+     * - userId: Int
+     * - purchase(Preference): 0 / 1 (Double)
      */
     val user = userData.as("temp1").join(gameData.as("temp2"), userData("gameName") === gameData("gameName"), "inner")
-      .select(col("temp2.id"), col("temp1.gameName"), col("temp1.userId"), col("temp1.behaviorTime"))
+      .select(col("temp2.id"), col("temp1.gameName"), col("temp1.userId"), col("temp1.purchase"))
     val userBehavior = user.withColumn("userId", col("userId").cast(IntegerType))
+      .withColumn("purchase", col("purchase").cast(DoubleType))
     userBehavior.show()
 
     /**
@@ -61,15 +64,32 @@ object DataFinal{
     gameData = gameData.join(userData, userData("gameName") === gameData("gameName"), "leftsemi")
     gameData.show()
 
-    println(userBehavior.count()) //result: 36302 (valid user data)
-    println(gameData.count()) //result: 1724  (valid game data)
+    /**
+     * Temp Table:
+     */
+    val gameCount = gameData.count().toInt
+    val userTemp = userBehavior.dropDuplicates("userId")
+      .withColumn("__temporarily__", typedLit((0 until gameCount).toArray))
+      .withColumn("id", explode($"__temporarily__"))
+      .select(col("id"), col("userId"), col("purchase")*0)
+      .distinct()
+    println(userTemp.count())
+
+    var userFin = userTemp.as("t1").
+      join(userBehavior.as("t2"), userBehavior("userId") === userTemp("userId") && userBehavior("id") === userTemp("id"), "left")
+      .select(col("t1.id"), col("t1.userId"), col("t1.(purchase * 0)"), col("t2.purchase"))
+      .distinct()
+      .na.fill(0)
+    val sch = Seq("id", "userId", "purchase")
+    userFin = userFin.select(userFin("id"), userFin("userId"), userFin("(purchase * 0)")+ userFin("purchase")).toDF(sch: _*)
 
     /**
      * Separate userData to 70% train data and 30% test data
      */
-    val splitData = userBehavior.orderBy(rand()).randomSplit(Array(0.7, 0.3))
+    val splitData = userFin.orderBy(rand()).randomSplit(Array(0.7, 0.2, 0.1))
     val trainSet = splitData(0)
-    val testSet = splitData(1)
+    val validSet = splitData(1)
+    val testSet = splitData(2)
 
     /**
      * save dataframe to mongoDB:
@@ -82,6 +102,7 @@ object DataFinal{
     import org.bson.Document
 
     MongoSpark.save(trainSet.write.option("collection", "train").mode("overwrite"))
+    MongoSpark.save(validSet.write.option("collection", "validation").mode("overwrite"))
     MongoSpark.save(testSet.write.option("collection", "test").mode("overwrite"))
     MongoSpark.save(gameData.write.option("collection", "game").mode("overwrite"))
 
