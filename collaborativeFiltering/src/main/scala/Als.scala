@@ -1,7 +1,8 @@
-import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql._
 import org.apache.spark.mllib.recommendation.ALS
 import org.apache.spark.sql.types.LongType
 import com.mongodb.spark.MongoSpark
+import org.apache.spark.sql.functions._
 
 case class User(userId: Int, id: Int, purchase: Double)
 
@@ -13,7 +14,7 @@ object Als {
       .appName("collaborativeFiltering")
       .master("local[*]")
       .config("spark.mongodb.input.uri", "mongodb://localhost:27017/testdb.train")
-      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/testdb.train")
+      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/testdb")
       .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
       .getOrCreate()
 
@@ -58,17 +59,25 @@ object Als {
       case (userId, id, purchase) => ((userId, id), purchase)
     }.join(predictions)
 
-    val originAndPredsDF = originAndPreds.toDF
+    val originAndPred = originAndPreds.map{
+      case ((_1, _2),(_3, _4)) => (_1, _2, _3, _4)
+    }
+    val originAndPredDF = originAndPred.toDF("userId", "id", "purchase", "prediction")
+
+    val originAndPredsDF = originAndPredDF.withColumn("prediction",
+      when(col("prediction") <= 0.1, 0.0)
+        .otherwise(1.0))
 
     originAndPredsDF.show()
 
-    val MSE = originAndPreds.map { case ((userid, id), (r1, r2)) =>
-      val err = (r1 - r2)
-      err * err
-    }.mean()
+    val MSE = originAndPredsDF.select(abs(originAndPredsDF("prediction") - originAndPredsDF("purchase")))
+      .toDF("product").agg(sum("product")/originAndPredsDF.count()).first.get(0)
 
     println(MSE)
 
+    val validPredict = originAndPredsDF.drop("purchase")
+
+    MongoSpark.save(validPredict.write.option("collection", "validPred").mode("overwrite"))
   }
 
 }
