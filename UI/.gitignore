@@ -1,0 +1,16 @@
+*.class
+*.log
+.classpath
+.project
+.settings
+
+.metadata
+*.iml
+*.ipr
+.idea
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
