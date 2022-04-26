@@ -32,7 +32,6 @@ object Als {
       .as[User]
       .rdd
       .map(user => (user.userId, user.id, user.purchase))
-      .cache()
 
     import org.apache.spark.mllib.recommendation.Rating
 
@@ -45,6 +44,8 @@ object Als {
       .setIterations(5)
       .setLambda(0.01)
       .run(trainData)
+
+    model.save(spark.sparkContext, "myModel.model")
 
     /**
      * Predict with model, create result dataframe
@@ -80,17 +81,17 @@ object Als {
 
     val originAndPredsDF = originAndPredDF
       .withColumn("prediction",
-        when(col("prediction") <= 0.15, 0.0)
+        when(col("prediction") <= 0.12, 0.0)
         .otherwise(1.0))
 
     originAndPredsDF.show()
 
     /**
-     * Calculate MAD(Mean Absolute Deviation)
+     * Calculate MAD(Mean Absolute Deviation): 0.2% error
      */
     val MAD = originAndPredsDF
       .select(abs(originAndPredsDF("prediction") - originAndPredsDF("purchase")))
-      .toDF("product").agg(sum("product"))
+      .toDF("product").agg(sum("product")/originAndPredsDF.count())
       .first
       .get(0)
 
@@ -98,8 +99,8 @@ object Als {
 
     /**
      * Statistical hypothesis testing：
-     * Recommended and interested
-     * Recommended but not interested
+     * Recommended and interested: 1144
+     * Recommended but not interested: 1156
      */
 
     val cor = originAndPredsDF
