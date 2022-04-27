@@ -9,15 +9,16 @@
 ![Alt text](https://github.com/Uni-boy/Scala_FinalProject/blob/ChenYe/presentation/GRecCons.png)
 
 ### Data Source:
-  - User game association table
+  - User game association table:
 https://www.kaggle.com/code/danieloehm/steam-game-recommendations/data
-  - Game tag association table
+  - Game tag association table:
+  - https://www.kaggle.com/datasets/nikdavis/steam-store-games
 ### Methodology :
   - Scala;
   - Spark;
   - play Framework;
   - MongoDB;
-  - 
+ 
 
 ### Instruction:
 1. In 'dataPreprocess' directory, use 'sbt run' to start date preprocess
