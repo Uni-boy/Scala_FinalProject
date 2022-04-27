@@ -6,10 +6,10 @@ import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import com.mongodb.spark.MongoSpark
 import org.apache.spark.sql.functions._
 
-case class User(userId: Int, id: Int, purchase: Double)
+case class UserData(userId: Int, id: Int, purchase: Double)
 
 object dynamicRec{
-  def find(id: Int): Unit{
+  def find(id: Int): Unit = {
     val spark: SparkSession = SparkSession
     .builder()
     .appName("collaborativeFiltering")
@@ -30,10 +30,10 @@ object dynamicRec{
 
     val filter = test
     .filter($"userId" === id)
-    .as[User]
+    .as[UserData]
     .rdd
     .map(
-    user => (user.userId, user.id, user.purchase)
+    userData => (userData.userId, userData.id, userData.purchase)
     )
 
     val testData = filter.map {
@@ -50,7 +50,7 @@ object dynamicRec{
     case Rating(userId, id, purchase) => ((userId, id), purchase)
   }
 
-    val originAndPreds = test.map {
+    val originAndPreds = filter.map {
     case (userId, id, purchase) => ((userId, id), purchase)
   }.join(predictions)
 
