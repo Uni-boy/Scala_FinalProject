@@ -21,7 +21,9 @@ object Recommend{
 
     import spark.implicits._
 
-    val test = spark.read.format("com.mongodb.spark.sql.DefaultSource")
+    val test = spark
+      .read
+      .format("com.mongodb.spark.sql.DefaultSource")
       .load()
       .drop("_id")
       .as[User]
@@ -58,9 +60,30 @@ object Recommend{
           .otherwise(1.0))
 
     /**
+     * Find popular games top20
+     */
+    val game = spark
+      .read
+      .format("com.mongodb.spark.sql.DefaultSource")
+      .option("uri", "mongodb://localhost:27017/testdb.game")
+      .load()
+
+
+    val top = game
+      .filter($"ratingCount" >= 500.0)
+      .orderBy(game("gameRating").desc)
+      .limit(20)
+      .select(col("id"))
+
+    val validPredict = originAndPredsDF.drop("purchase")
+
+    /** TODO
+    val validPredict = validPred.join(top, validPred("id") === top("id"), )
+    **/
+
+    /**
      * Save predictions to mongoDB
      */
-    val validPredict = originAndPredsDF.drop("purchase")
 
     MongoSpark.save(validPredict.write.option("collection", "testPred").mode("overwrite"))
   }

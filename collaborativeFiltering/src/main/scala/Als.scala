@@ -51,7 +51,9 @@ object Als {
      * Predict with model, create result dataframe
      * Data: test.collection
      */
-    val test = spark.read.format("com.mongodb.spark.sql.DefaultSource")
+    val test = spark
+      .read
+      .format("com.mongodb.spark.sql.DefaultSource")
       .option("uri", "mongodb://localhost:27017/testdb.validation")
       .load()
       .drop("_id")
