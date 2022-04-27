@@ -11,6 +11,9 @@ PATCH     /todos/:id                  controllers.TodoController.updateTodo(id: 
 + nocsrf
 DELETE    /todos/:id                  controllers.TodoController.deleteTodo(id: java.util.UUID)
 
+# Routes
+GET       /user                       controllers.userController.getAllUsers
+
 # Swagger docs
 GET       /                           controllers.ApiDocsController.redirectToDocs
 GET       /swagger.json               controllers.ApiHelpController.getResources
