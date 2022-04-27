@@ -1,6 +1,10 @@
 package models
 
 import org.apache.spark.sql._
+import org.apache.spark.mllib.recommendation.ALS
+import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
+import com.mongodb.spark.MongoSpark
+import org.apache.spark.sql.functions._
 
 case class User(userId: Int, id: Int, purchase: Double)
 
@@ -62,7 +66,15 @@ object dynamicRec{
     when(col("prediction") <= 0.12, 0.0)
     .otherwise(1.0))
 
-    MongoSpark.save(validPredict.write.option("collection", "testPred").mode("append"))
+    val testPredict = originAndPredsDF.drop("purchase")
+
+    import com.mongodb.spark._
+    import com.mongodb.spark.config._
+    import org.bson.Document
+
+    MongoSpark.save(testPredict.write.option("collection", "testPred").mode("append"))
+
+    spark.stop()
 
   }
 }
