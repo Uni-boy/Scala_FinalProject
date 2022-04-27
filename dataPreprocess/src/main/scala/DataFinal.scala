@@ -106,6 +106,7 @@ object DataFinal{
     MongoSpark.save(testSet.write.option("collection", "test").mode("overwrite"))
     MongoSpark.save(gameData.write.option("collection", "game").mode("overwrite"))
 
+    spark.stop()
   }
 
 }
