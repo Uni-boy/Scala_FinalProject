@@ -14,10 +14,11 @@ https://www.kaggle.com/code/danieloehm/steam-game-recommendations/data
   - Game tag association table
 ### Methodology :
   - Scala;
+  - Spark;
   - play Framework;
   - MongoDB;
   - 
-  - 
+
 ### Instruction:
 1. In 'dataPreprocess' directory, use 'sbt run' to start date preprocess
 2. In 'collaborativeFiltering' directory, use 'sbt -v -J-Xmx2048m run' to train and validate data from Mongodb
