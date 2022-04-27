@@ -114,13 +114,6 @@ object Als {
     println(cor)
     println(err)
 
-    /**
-     * Save predictions to mongoDB
-     */
-    val validPredict = originAndPredsDF.drop("purchase")
-
-    MongoSpark.save(validPredict.write.option("collection", "validPred").mode("overwrite"))
-
     spark.stop()
   }
 
