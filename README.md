@@ -6,7 +6,7 @@
 - Jingru Xiang - 001586653 
 
 ### Outlier:
-![Alt text]()
+![Alt text](https://github.com/Uni-boy/Scala_FinalProject/blob/ChenYe/presentation/GRecCons.png)
 
 ### Data Source:
   - User game association table
