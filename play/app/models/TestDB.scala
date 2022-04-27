@@ -1,18 +1,39 @@
 package models
 
-import javax.inject.Inject
 import play.api.libs.json.{Json, OFormat}
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.bson.collection.BSONCollection
 import reactivemongo.api.bson.{BSONDocument, BSONDocumentReader, BSONDocumentWriter}
 
-import scala.concurrent.{ExecutionContext, Future}
+import javax.inject.Inject
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Success
 
 /**
  * Created by Riccardo Sirigu on 10/08/2017.
  */
-case class User( userId: Int, id: Int, purchase: Int)
+case class User(userId: Int, id: Int, purchase: Int)
+
+case class Prediction(userId: Int, id: Int, prediction: Int)
+
+object Prediction {
+  implicit val userFormat: OFormat[Prediction] = Json.format[Prediction]
+
+  implicit object RateMoviesHandler extends BSONDocumentWriter[Prediction] with BSONDocumentReader[Prediction] {
+    def writeTry(t: Prediction) = Success(BSONDocument(
+      "userId" -> t.userId,
+      "id" -> t.id,
+      "prediction" -> t.prediction
+    ))
+
+    def readDocument(doc: BSONDocument) = for {
+      userId <- doc.getAsTry[Int]("userId")
+      id <- doc.getAsTry[Int]("id")
+      purchase <- doc.getAsTry[Int]("prediction")
+    } yield Prediction(userId, id, purchase)
+  }
+}
 
 object User {
   implicit val userFormat: OFormat[User] = Json.format[User]
@@ -33,11 +54,11 @@ object User {
 }
 
 class TestRepository @Inject()(
-  implicit ec: ExecutionContext,
-  reactiveMongoApi: ReactiveMongoApi) {
+                                implicit ec: ExecutionContext,
+                                reactiveMongoApi: ReactiveMongoApi) {
 
-  import reactivemongo.play.json.compat,
-  compat.json2bson._
+  import reactivemongo.play.json.compat
+  import compat.json2bson._
 
   private def userCollection: Future[BSONCollection] =
     reactiveMongoApi.database.map(_.collection[BSONCollection]("test"))
@@ -53,20 +74,22 @@ class TestRepository @Inject()(
     userCollection.flatMap(_.find(BSONDocument.empty).
       cursor[User]().collect[Seq](100))
 
-  def getRecommendGameId(id : Int)  = {
-    val gameIds = userCollection.flatMap(_.find(BSONDocument("userId" -> id, "prediction" -> 1)).
-       cursor[User]().collect[Seq](100)).map(users => users.map(user => user.id))
-    gameIds
+  def getRecommendGameId(id: Int) = {
+    println(id)
+    val gameIds = predCollection.flatMap(_.find(BSONDocument("userId" -> id, "prediction" -> 1)).
+      cursor[Prediction]().collect[Seq](100)).map(users => users.map(user => user.id))
+    Await.result(gameIds, 5.second)
+
   }
 
 
 
-//  def getMovie(uid: Int): Future[Option[User]] = {
-//    userCollection.flatMap(_.find(BSONDocument("id" -> id)).one[User])
-//  }
-//
-//  def getMovieGMN(mid: Int): Future[Option[MovieGMN]] = {
-//    movieCollection.flatMap(_.find(BSONDocument("mid" -> mid)).one[MovieGMN])
-//  }
+  //  def getMovie(uid: Int): Future[Option[User]] = {
+  //    userCollection.flatMap(_.find(BSONDocument("id" -> id)).one[User])
+  //  }
+  //
+  //  def getMovieGMN(mid: Int): Future[Option[MovieGMN]] = {
+  //    movieCollection.flatMap(_.find(BSONDocument("mid" -> mid)).one[MovieGMN])
+  //  }
 
 }

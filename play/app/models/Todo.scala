@@ -1,41 +1,35 @@
 package models
 
-import javax.inject.Inject
-
-import java.util.UUID
-
-import scala.concurrent.{ExecutionContext, Future}
-
-import play.api.libs.json.Json
 import play.modules.reactivemongo.ReactiveMongoApi
-
-import reactivemongo.api.{Cursor, ReadPreference}
-import reactivemongo.api.commands.WriteResult
-
 import reactivemongo.api.bson.BSONDocument
 import reactivemongo.api.bson.collection.BSONCollection
+import reactivemongo.api.commands.WriteResult
+
+import java.util.UUID
+import javax.inject.Inject
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Created by Riccardo Sirigu on 10/08/2017.
  */
 case class Todo(
-  _id: Option[UUID], // Avoid using BSONObjectID, not to couple model with DB
-  title: String,
-  completed: Option[Boolean])
+                 _id: Option[UUID], // Avoid using BSONObjectID, not to couple model with DB
+                 title: String,
+                 completed: Option[Boolean])
 
 object Todo {
+
   import play.api.libs.json._
 
   implicit val todoFormat: OFormat[Todo] = Json.format[Todo]
 }
 
 class TodoRepository @Inject()(
-  implicit ec: ExecutionContext,
-  reactiveMongoApi: ReactiveMongoApi) {
+                                implicit ec: ExecutionContext,
+                                reactiveMongoApi: ReactiveMongoApi) {
 
-  import reactivemongo.play.json.compat,
-    compat.jsObjectWrites,
-    compat.json2bson._
+  import reactivemongo.play.json.compat
+  import compat.json2bson._
 
   private def todosCollection: Future[BSONCollection] =
     reactiveMongoApi.database.map(_.collection("todos"))
