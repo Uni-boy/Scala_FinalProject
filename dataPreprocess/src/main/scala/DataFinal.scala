@@ -34,11 +34,22 @@ object DataFinal{
      */
     import org.apache.spark.sql.types.{IntegerType, DoubleType}
 
+    /**
+     * Game Schema:
+     * - gameName
+     * - gameTags
+     * - ratingCount
+     * - gameRating
+     * - id(gameId)
+     */
     val df = spark.read.option("delimiter", ",").option("header", "true").csv("./src/main/resources/steam.csv")
     val schema = Seq("gameName", "gameTags", "ratingCount", "gameRating")
-    var gameData = df.select(df("name"), df("genres"), df("positive_ratings") + df("negative_ratings"),
-      df("positive_ratings") * 10/(df("positive_ratings") + df("negative_ratings"))).toDF(schema: _*)
+    val game = df.join(userData, userData("gameName") === df("name"), "leftsemi")
+    var gameData = game.select(game("name"), game("genres"), game("positive_ratings") + game("negative_ratings"),
+      game("positive_ratings") * 10/(game("positive_ratings") + game("negative_ratings"))).toDF(schema: _*)
     gameData = gameData.withColumn("id", monotonically_increasing_id).withColumn("id", col("id").cast(IntegerType))
+
+    gameData.show()
 
     /**
      * TrainSet and TestSet Schema:
@@ -52,17 +63,6 @@ object DataFinal{
     val userBehavior = user.withColumn("userId", col("userId").cast(IntegerType))
       .withColumn("purchase", col("purchase").cast(DoubleType))
     userBehavior.show()
-
-    /**
-     * Game Schema:
-     * - gameName
-     * - gameTags
-     * - ratingCount
-     * - gameRating
-     * - id(gameId)
-     */
-    gameData = gameData.join(userData, userData("gameName") === gameData("gameName"), "leftsemi")
-    gameData.show()
 
     /**
      * Temp Table:
