@@ -79,7 +79,30 @@ class TestRepository @Inject()(
     val gameIds = predCollection.flatMap(_.find(BSONDocument("userId" -> id, "prediction" -> 1)).
       cursor[Prediction]().collect[Seq](100)).map(users => users.map(user => user.id))
     Await.result(gameIds, 5.second)
+  }
 
+  def getAllUnpurchaseGames(id: Int) = {
+    val ungameIds = userCollection.flatMap(_.find(BSONDocument("userId" -> id, "purchase" -> 0)).
+      cursor[User]().collect[Seq](100)).map(users => users.map(user => user.id))
+    Await.result(ungameIds, 5.second)
+  }
+
+  def update(userId: Int, gameId: Int) = {
+    val selector = BSONDocument("userId" -> userId, "id" -> gameId)
+    val modifier = BSONDocument("purchase" -> 1)
+    val futureUpdate1 = userCollection.map {
+      userColl =>
+        userColl.update
+          .one(
+            q = selector
+            ,
+            u = modifier
+            ,
+            upsert = false
+            ,
+            multi = false
+          )
+    }
   }
 
 
