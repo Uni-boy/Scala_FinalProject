@@ -168,18 +168,7 @@ class TestRepository @Inject()(
 
     MongoSpark.save(testPredict.write.option("collection", "testPred").mode("append"))
 
-    spark.stop()
-
   }
 
-
-
-  //  def getMovie(uid: Int): Future[Option[User]] = {
-  //    userCollection.flatMap(_.find(BSONDocument("id" -> id)).one[User])
-  //  }
-  //
-  //  def getMovieGMN(mid: Int): Future[Option[MovieGMN]] = {
-  //    movieCollection.flatMap(_.find(BSONDocument("mid" -> mid)).one[MovieGMN])
-  //  }
 
 }
