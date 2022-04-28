@@ -1,15 +1,12 @@
 package controllers
 
 import io.swagger.annotations.{Api, ApiOperation, ApiParam}
-import models.{TestRepository, User, dynamicRec, gameRepository}
+import models.{TestRepository, User, gameRepository}
 import play.api.libs.json.Json
 import play.api.mvc.{AbstractController, ControllerComponents}
 
 import javax.inject.Inject
 
-/**
- * Created by Riccardo Sirigu on 10/08/2017.
- */
 @Api(value = "/Statics Recommendation")
 class gameController @Inject()(
                                 cc: ControllerComponents,
@@ -38,7 +35,7 @@ class gameController @Inject()(
                     @ApiParam(value = "The id of the game the user not yet purchased") gameId: Int) = Action {
     req =>
       userRepo.update(userId, gameId)
-      dynamicRec.find(userId)
+      userRepo.find(userId)
       val ints = userRepo.getAllUnpurchaseGames(userId)
       val eventualMaybeGames = ints.map {
         gameId => gameRepo.getGame(gameId)

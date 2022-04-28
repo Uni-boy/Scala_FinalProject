@@ -7,9 +7,6 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 
 import javax.inject.Inject
 
-/**
- * Created by Riccardo Sirigu on 10/08/2017.
- */
 @Api(value = "/Recommendation")
 class userController @Inject()(
                                 cc: ControllerComponents,

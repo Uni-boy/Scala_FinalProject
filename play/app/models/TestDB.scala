@@ -1,5 +1,8 @@
 package models
 
+import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.{col, when}
 import play.api.libs.json.{Json, OFormat}
 import play.modules.reactivemongo.ReactiveMongoApi
 import reactivemongo.api.bson.collection.BSONCollection
@@ -10,12 +13,9 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Success
 
-/**
- * Created by Riccardo Sirigu on 10/08/2017.
- */
-case class User(userId: Int, id: Int, purchase: Int)
+case class User(userId: Int, id: Int, purchase: Double)
 
-case class Prediction(userId: Int, id: Int, prediction: Int)
+case class Prediction(userId: Int, id: Int, prediction: Double)
 
 object Prediction {
   implicit val userFormat: OFormat[Prediction] = Json.format[Prediction]
@@ -103,6 +103,73 @@ class TestRepository @Inject()(
             multi = false
           )
     }
+  }
+
+  def find(id: Int): Unit = {
+    val spark: SparkSession = SparkSession
+      .builder()
+      .appName("collaborativeFiltering")
+      .master("local[*]")
+      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/testdb.test")
+      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/testdb.test")
+      .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
+      .getOrCreate()
+
+    spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
+
+    val test = spark
+      .read
+      .format("com.mongodb.spark.sql.DefaultSource")
+      .load()
+
+    import spark.implicits._
+
+    val filter = test
+      .filter($"userId" === id)
+      .as[User]
+      .rdd
+      .map(
+        userData => (userData.userId, userData.id, userData.purchase)
+      )
+
+    val testData = filter.map {
+      case (userId, id, purchase) => (userId, id)
+    }
+
+    val sameModel = MatrixFactorizationModel.load(spark.sparkContext, "../collaborativeFiltering/myModel.model")
+
+    import org.apache.spark.mllib.recommendation.Rating
+
+    val predictions = sameModel
+      .predict(testData)
+      .map {
+        case Rating(userId, id, purchase) => ((userId, id), purchase)
+      }
+
+    val originAndPreds = filter.map {
+      case (userId, id, purchase) => ((userId, id), purchase)
+    }.join(predictions)
+
+    val originAndPredDF = originAndPreds.map {
+      case ((_1, _2), (_3, _4)) => (_1, _2, _3, _4)
+    }.toDF("userId", "id", "purchase", "prediction")
+
+    /**
+     * Prediction result for specific userId
+     */
+    val originAndPredsDF = originAndPredDF
+      .withColumn("prediction",
+        when(col("prediction") <= 0.12, 0.0)
+          .otherwise(1.0))
+
+    val testPredict = originAndPredsDF.drop("purchase")
+
+    import com.mongodb.spark._
+
+    MongoSpark.save(testPredict.write.option("collection", "testPred").mode("append"))
+
+    spark.stop()
+
   }
 
 
