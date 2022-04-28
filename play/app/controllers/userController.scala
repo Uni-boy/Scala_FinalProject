@@ -1,29 +1,29 @@
 package controllers
 
-import io.swagger.annotations.{Api, ApiOperation}
-import models.{TestRepository, User}
+import io.swagger.annotations.{Api, ApiOperation, ApiParam}
+import models.{TestRepository, User, gameRepository}
 import play.api.libs.json.Json
 import play.api.mvc.{AbstractController, ControllerComponents}
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
- * Created by Riccardo Sirigu on 10/08/2017.
- */
-@Api(value = "/Statics Recommendation")
+@Api(value = "/Recommendation")
 class userController @Inject()(
                                 cc: ControllerComponents,
-                                testRepo: TestRepository) extends AbstractController(cc) {
+                                testRepo: TestRepository, gameRepo: gameRepository) extends AbstractController(cc) {
 
   @ApiOperation(
-    value = "Find all Users",
-    response = classOf[User],
-    responseContainer = "List"
+    value = "Find all unpurchased games of the specific user",
+    response = classOf[User]
   )
-  def getAllUsers = Action.async {
-    testRepo.getAll.map { user =>
-      Ok(Json.toJson(user))
-    }
+  def getUnpurchaseGames(@ApiParam(value = "The id of the User to show the unpurchased games") userId: Int) = Action {
+    req =>
+      val ints = testRepo.getAllUnpurchaseGames(userId)
+      val eventualMaybeGames = ints.map {
+        gameId => gameRepo.getGame(gameId)
+      }
+      Ok(Json.toJson(eventualMaybeGames))
   }
+
+
 }

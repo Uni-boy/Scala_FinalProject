@@ -7,9 +7,6 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 
 import javax.inject.Inject
 
-/**
- * Created by Riccardo Sirigu on 10/08/2017.
- */
 @Api(value = "/Statics Recommendation")
 class gameController @Inject()(
                                 cc: ControllerComponents,
@@ -24,6 +21,22 @@ class gameController @Inject()(
       val ints = userRepo.getRecommendGameId(userId)
       println(ints.size)
       ints.foreach(println)
+      val eventualMaybeGames = ints.map {
+        gameId => gameRepo.getGame(gameId)
+      }
+      Ok(Json.toJson(eventualMaybeGames))
+  }
+
+  @ApiOperation(
+    value = "Dynamic recommendation",
+    response = classOf[User]
+  )
+  def getDynamicRec(@ApiParam(value = "The id of the User wanna get recommendation") userId: Int,
+                    @ApiParam(value = "The id of the game the user not yet purchased") gameId: Int) = Action {
+    req =>
+      userRepo.update(userId, gameId)
+      userRepo.find(userId)
+      val ints = userRepo.getAllUnpurchaseGames(userId)
       val eventualMaybeGames = ints.map {
         gameId => gameRepo.getGame(gameId)
       }

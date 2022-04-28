@@ -10,9 +10,6 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Success
 
-/**
- * Created by Riccardo Sirigu on 10/08/2017.
- */
 case class Game(id: Int, gameName: String)
 
 object Game {
