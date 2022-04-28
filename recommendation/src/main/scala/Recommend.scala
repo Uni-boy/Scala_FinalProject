@@ -4,7 +4,7 @@ import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import com.mongodb.spark.MongoSpark
 import org.apache.spark.sql.functions._
 
-case class User(userId: Int, id: Int, purchase: Double)
+case class UserData(userId: Int, id: Int, purchase: Double)
 
 object Recommend{
   def main(args: Array[String]): Unit = {
@@ -26,10 +26,10 @@ object Recommend{
       .format("com.mongodb.spark.sql.DefaultSource")
       .load()
       .drop("_id")
-      .as[User]
+      .as[UserData]
       .rdd
       .map(
-        user => (user.userId, user.id, user.purchase)
+        userData => (userData.userId, userData.id, userData.purchase)
       )
 
     val testData = test.map {
