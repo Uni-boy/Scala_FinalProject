@@ -75,15 +75,14 @@ class TestRepository @Inject()(
       cursor[User]().collect[Seq](100))
 
   def getRecommendGameId(id: Int) = {
-    println(id)
     val gameIds = predCollection.flatMap(_.find(BSONDocument("userId" -> id, "prediction" -> 1)).
-      cursor[Prediction]().collect[Seq](100)).map(users => users.map(user => user.id))
+      cursor[Prediction]().collect[Seq](10)).map(users => users.map(user => user.id))
     Await.result(gameIds, 5.second)
   }
 
   def getAllUnpurchaseGames(id: Int) = {
     val ungameIds = userCollection.flatMap(_.find(BSONDocument("userId" -> id, "purchase" -> 0)).
-      cursor[User]().collect[Seq](100)).map(users => users.map(user => user.id))
+      cursor[User]().collect[Seq](10)).map(users => users.map(user => user.id))
     Await.result(ungameIds, 5.second)
   }
 
@@ -105,17 +104,20 @@ class TestRepository @Inject()(
     }
   }
 
-  def find(id: Int): Unit = {
-    val spark: SparkSession = SparkSession
-      .builder()
-      .appName("collaborativeFiltering")
-      .master("local[*]")
-      .config("spark.mongodb.input.uri", "mongodb://localhost:27017/testdb.test")
-      .config("spark.mongodb.output.uri", "mongodb://localhost:27017/testdb.test")
-      .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
-      .getOrCreate()
+  val spark: SparkSession = SparkSession
+    .builder()
+    .appName("collaborativeFiltering")
+    .master("local[*]")
+    .config("spark.mongodb.input.uri", "mongodb://localhost:27017/testdb.test")
+    .config("spark.mongodb.output.uri", "mongodb://localhost:27017/testdb.test")
+    .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1")
+    .getOrCreate()
 
-    spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
+  spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
+
+  val sameModel = MatrixFactorizationModel.load(spark.sparkContext, "../collaborativeFiltering/myModel.model")
+
+  def find(id: Int): Unit = {
 
     val test = spark
       .read
@@ -135,8 +137,6 @@ class TestRepository @Inject()(
     val testData = filter.map {
       case (userId, id, purchase) => (userId, id)
     }
-
-    val sameModel = MatrixFactorizationModel.load(spark.sparkContext, "../collaborativeFiltering/myModel.model")
 
     import org.apache.spark.mllib.recommendation.Rating
 
