@@ -59,27 +59,7 @@ object Recommend{
         when(col("prediction") <= 0.12, 0.0)
           .otherwise(1.0))
 
-    /**
-     * Find popular games top20
-     */
-    val game = spark
-      .read
-      .format("com.mongodb.spark.sql.DefaultSource")
-      .option("uri", "mongodb://localhost:27017/testdb.game")
-      .load()
-
-
-    val top = game
-      .filter($"ratingCount" >= 500.0)
-      .orderBy(game("gameRating").desc)
-      .limit(20)
-      .select(col("id"))
-
-    val validPredict = originAndPredsDF.drop("purchase")
-
-    /** TODO
-    val validPredict = validPred.join(top, validPred("id") === top("id"), )
-    **/
+    val validPredict = originAndPredsDF.drop("purchase").filter($"prediction" === 1.0)
 
     /**
      * Save predictions to mongoDB
