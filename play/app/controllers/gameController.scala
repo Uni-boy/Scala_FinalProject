@@ -25,20 +25,5 @@ class gameController @Inject()(
       Ok(Json.toJson(eventualMaybeGames))
   }
 
-  @ApiOperation(
-    value = "Dynamic recommendation",
-    response = classOf[User]
-  )
-  def getDynamicRec(@ApiParam(value = "The id of the User wanna get recommendation") userId: Int,
-                    @ApiParam(value = "The id of the game the user not yet purchased") gameId: Int) = Action {
-    req =>
-      userRepo.update(userId, gameId)
-      userRepo.find(userId)
-      val ints = userRepo.getAllUnpurchaseGames(userId)
-      val eventualMaybeGames = ints.map {
-        gameId => gameRepo.getGame(gameId)
-      }
-      Ok(Json.toJson(eventualMaybeGames))
-  }
 
 }

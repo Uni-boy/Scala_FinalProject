@@ -7,10 +7,10 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 
 import javax.inject.Inject
 
-@Api(value = "/Recommendation")
+@Api(value = "/Dynamic Recommendation")
 class userController @Inject()(
                                 cc: ControllerComponents,
-                                testRepo: TestRepository, gameRepo: gameRepository) extends AbstractController(cc) {
+                                userRepo: TestRepository, gameRepo: gameRepository) extends AbstractController(cc) {
 
   @ApiOperation(
     value = "Find all unpurchased games of the specific user",
@@ -18,7 +18,23 @@ class userController @Inject()(
   )
   def getUnpurchaseGames(@ApiParam(value = "The id of the User to show the unpurchased games") userId: Int) = Action {
     req =>
-      val ints = testRepo.getAllUnpurchaseGames(userId)
+      val ints = userRepo.getAllUnpurchaseGames(userId)
+      val eventualMaybeGames = ints.map {
+        gameId => gameRepo.getGame(gameId)
+      }
+      Ok(Json.toJson(eventualMaybeGames))
+  }
+
+  @ApiOperation(
+    value = "Dynamic recommendation",
+    response = classOf[User]
+  )
+  def getDynamicRec(@ApiParam(value = "The id of the User wanna get recommendation") userId: Int,
+                    @ApiParam(value = "The id of the game the user not yet purchased") gameId: Int) = Action {
+    req =>
+      userRepo.update(userId, gameId)
+      userRepo.find(userId)
+      val ints = userRepo.getAllUnpurchaseGames(userId)
       val eventualMaybeGames = ints.map {
         gameId => gameRepo.getGame(gameId)
       }

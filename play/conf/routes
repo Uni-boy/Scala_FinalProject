@@ -14,7 +14,7 @@
 # Routes
 GET        /game/:userId                controllers.gameController.getGames(userId : Int)
 GET        /user/:userId                controllers.userController.getUnpurchaseGames(userId: Int)
-GET        /game/:userId/:gameId        controllers.gameController.getDynamicRec(userId: Int, gameId: Int)
+GET        /game/:userId/:gameId        controllers.userController.getDynamicRec(userId: Int, gameId: Int)
 
 # Swagger docs
 GET        /                            controllers.ApiDocsController.redirectToDocs
