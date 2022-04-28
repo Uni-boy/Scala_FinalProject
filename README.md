@@ -4,8 +4,8 @@
 
 ### Group Members:
 
-- Chen Ye - 002951477​
-- Xinzhuo Liu - 002197134​
+- Chen Ye - 002951477 
+- Xinzhuo Liu - 002197134
 - Jingru Xiang - 001586653 
 
 ### Outlier:
