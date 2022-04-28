@@ -17,22 +17,14 @@ https://www.kaggle.com/code/danieloehm/steam-game-recommendations/data
   - Game tag association table:
 https://www.kaggle.com/datasets/nikdavis/steam-store-games
 
-- User game association table
-  https://www.kaggle.com/code/danieloehm/steam-game-recommendations/data
-- Game tag association table
-
 ### Methodology :
-  - Scala;
-  - Spark;
-  - play Framework;
-  - MongoDB;
+  - Scala
+  - Spark
+  - Collaborative Filtering
+  - Swigger UI
+  - play Framework
+  - MongoDB
  
-
-- Scala;
-- Spark;
-- play Framework;
-- MongoDB;
--
 
 ### Instruction:
 
