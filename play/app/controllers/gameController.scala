@@ -19,8 +19,6 @@ class gameController @Inject()(
   def getGames(@ApiParam(value = "The id of the User to recommend") userId: Int) = Action {
     req =>
       val ints = userRepo.getRecommendGameId(userId)
-      println(ints.size)
-      ints.foreach(println)
       val eventualMaybeGames = ints.map {
         gameId => gameRepo.getGame(gameId)
       }
