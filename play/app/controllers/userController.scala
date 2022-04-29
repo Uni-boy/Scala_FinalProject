@@ -1,7 +1,7 @@
 package controllers
 
 import io.swagger.annotations.{Api, ApiOperation, ApiParam}
-import models.{TestRepository, User, gameRepository}
+import models.{TestRepository, User, gameRepository, dynamicRec}
 import play.api.libs.json.Json
 import play.api.mvc.{AbstractController, ControllerComponents}
 
@@ -10,7 +10,7 @@ import javax.inject.Inject
 @Api(value = "/Dynamic Recommendation")
 class userController @Inject()(
                                 cc: ControllerComponents,
-                                userRepo: TestRepository, gameRepo: gameRepository) extends AbstractController(cc) {
+                                userRepo: TestRepository, gameRepo: gameRepository, dynamicRepo: dynamicRec) extends AbstractController(cc) {
 
   @ApiOperation(
     value = "Find all unpurchased games of the specific user",
@@ -33,7 +33,7 @@ class userController @Inject()(
                     @ApiParam(value = "The id of the game the user not yet purchased") gameId: Int) = Action {
     req =>
       userRepo.update(userId, gameId)
-      userRepo.find(userId)
+      dynamicRepo.find(userId)
       val ints = userRepo.getAllUnpurchaseGames(userId)
       val eventualMaybeGames = ints.map {
         gameId => gameRepo.getGame(gameId)
