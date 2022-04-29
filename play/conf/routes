@@ -12,14 +12,14 @@
 #DELETE    /todos/:id                  controllers.TodoController.deleteTodo(id: java.util.UUID)
 
 # Routes
-GET        /game/:userId                controllers.gameController.getGames(userId : Int)
-GET        /user/:userId                controllers.userController.getUnpurchaseGames(userId: Int)
-GET        /game/:userId/:gameId        controllers.userController.getDynamicRec(userId: Int, gameId: Int)
+GET        /game/:userId               controllers.gameController.getGames(userId : Int)
+GET        /user/:userId               controllers.userController.getUnpurchaseGames(userId: Int)
+GET        /rec/:userId/:gameId        controllers.userController.getDynamicRec(userId: Int, gameId: Int)
 
 # Swagger docs
-GET        /                            controllers.ApiDocsController.redirectToDocs
-GET        /swagger.json                controllers.ApiHelpController.getResources
-GET        /api-docs                    controllers.ApiDocsController.redirectToDocs
+GET        /                           controllers.ApiDocsController.redirectToDocs
+GET        /swagger.json               controllers.ApiHelpController.getResources
+GET        /api-docs                   controllers.ApiDocsController.redirectToDocs
 
 # Map static resources from the /public folder to the /assets URL path
-GET        /assets/*file                controllers.Assets.versioned(path="/public", file: Asset)
+GET        /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

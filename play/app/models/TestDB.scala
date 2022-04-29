@@ -88,7 +88,7 @@ class TestRepository @Inject()(
 
   def update(userId: Int, gameId: Int) = {
     val selector = BSONDocument("userId" -> userId, "id" -> gameId)
-    val modifier = BSONDocument("purchase" -> 1)
+    val modifier = BSONDocument("$set" -> BSONDocument("purchase" -> 1))
     val futureUpdate1 = userCollection.map {
       userColl =>
         userColl.update
