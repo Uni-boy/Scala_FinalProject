@@ -88,8 +88,15 @@ object Als {
 
     originAndPredsDF.show()
 
+    val validPredict = originAndPredsDF.drop("purchase").filter($"prediction" === 1.0)
+
     /**
-     * Calculate MAD(Mean Absolute Deviation): 0.2% error
+     * Save predictions to mongoDB
+     */
+    MongoSpark.save(validPredict.write.option("collection", "validPred").mode("overwrite"))
+
+    /**
+     * Calculate MAD(Mean Absolute Deviation): 0.25% error
      */
     val MAD = originAndPredsDF
       .select(abs(originAndPredsDF("prediction") - originAndPredsDF("purchase")))
@@ -101,8 +108,8 @@ object Als {
 
     /**
      * Statistical hypothesis testing：
-     * Recommended and interested: 1144
-     * Recommended but not interested: 1156
+     * Recommended and interested: 1370
+     * Recommended but not interested: 1602
      */
 
     val cor = originAndPredsDF
