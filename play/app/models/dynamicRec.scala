@@ -77,4 +77,5 @@ class dynamicRec @Inject()(
     MongoSpark.save(testPredict.write.option("collection", "testPred").mode("append"))
 
   }
+
 }
