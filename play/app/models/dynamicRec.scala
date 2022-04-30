@@ -12,7 +12,7 @@ case class UserData(userId: Int, id: Int, purchase: Double)
 
 class dynamicRec @Inject()(
                             implicit ec: ExecutionContext,
-                            reactiveMongoApi: ReactiveMongoApi){
+                            reactiveMongoApi: ReactiveMongoApi) {
   val spark: SparkSession = SparkSession
     .builder()
     .appName("collaborativeFiltering")
@@ -25,7 +25,8 @@ class dynamicRec @Inject()(
   spark.sparkContext.setLogLevel("ERROR") // We want to ignore all of the INFO and WARN messages.
 
   val sameModel = MatrixFactorizationModel.load(spark.sparkContext, "../collaborativeFiltering/myModel.model")
-def find(id: Int): Unit = {
+
+  def find(id: Int): Unit = {
     val test = spark
       .read
       .format("com.mongodb.spark.sql.DefaultSource")
