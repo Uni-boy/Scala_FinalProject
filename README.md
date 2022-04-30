@@ -4,9 +4,9 @@
 
 ### Group Members:
 
-- Chen Ye - 002951477 
-- Xinzhuo Liu - 002197134
-- Jingru Xiang - 001586653 
+- Chen Ye - 002951477 [@yechen0704](https://github.com/yechen0704)
+- Xinzhuo Liu - 002197134 [@ZhongLBuL](https://github.com/ZhongLBuL)
+- Jingru Xiang - 001586653 [@RubyXiang](https://github.com/RubyXiang)
 
 ### Outlier:
 ![Alt text](https://github.com/Uni-boy/Scala_FinalProject/blob/ChenYe/presentation/GRecCons.png)
