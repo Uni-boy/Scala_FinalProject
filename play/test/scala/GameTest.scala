@@ -1,12 +1,14 @@
 package scala
 
 import models.Game
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import reactivemongo.api.bson.BSONDocument
 
 import scala.util.Success
 
-class GameTest extends FlatSpec with Matchers {
+class GameTest extends AnyFlatSpec with Matchers {
 
   behavior of "Game"
 

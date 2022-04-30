@@ -20,9 +20,9 @@ libraryDependencies ++= Seq(
   "org.mongodb.spark" % "mongo-spark-connector_2.12" % "3.0.2",
   "org.mongodb.scala" % "mongo-scala-driver_2.12" % "4.1.0",
   "org.apache.spark" % "spark-mllib_2.12" % "3.1.3",
-  "org.scalatest" %% "scalatest" % "3.2.3" % Test,
-  "org.mockito" %% "mockito-scala" % "1.16.23" % Test
+  "org.scalatest" %% "scalatest" % "3.2.3" % "test"
 )
+
 
 import play.sbt.routes.RoutesKeys
 

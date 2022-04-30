@@ -1,12 +1,14 @@
 package scala
 
 import models.{Prediction, User}
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.must.Matchers.matchPattern
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import reactivemongo.api.bson.BSONDocument
 
 import scala.util.Success
 
-class TestDBTest extends FlatSpec with Matchers {
+class TestDBTest extends AnyFlatSpec {
 
   behavior of "User"
 
