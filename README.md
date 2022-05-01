@@ -35,9 +35,10 @@ https://www.kaggle.com/datasets/nikdavis/steam-store-games
 
 ### Instruction:
 
+Firstly, you need import *Scala_FinalProject*, *collaborativeFiltering*, *dataPreprocess*, *play*, *recommendation* directories as modules when you start the project to run unit test, and then:
 1. Data Preprocess: '**cd dataPreprocess**', in 'dataPreprocess' directory, use '**sbt run**' to start.
 When finished, 'game.collection', 'train.collection', 'validation.collection', and 'test.collection' can be seen in Mongodb Compass.
 2. Train Model: '**cd collaborativeFiltering**', in 'collaborativeFiltering' directory, use '**sbt -v -J-Xmx2048m run**' to train and validate data from Mongodb.
  When finished, the directory 'myModel.model' will appear in 'collaborativeFiltering' directory, and 'validPred', which stores the prediction values, is created in MongoDB.
 3. Static Prediction: '**cd recommendation**', in 'recommendation' directory, use '**sbt run**' to create prediction collection 'testPred' for test collection.
-2. Start System & Dynamic Prediction: '**cd play**', in 'play' directory, use '**sbt -v -J-Xmx2048m run**' to start project. Then, to input 'http://localhost:9000/' on web page to use our system.
+4. Start System & Dynamic Prediction: '**cd play**', in 'play' directory, use '**sbt -v -J-Xmx2048m run**' to start project. Then, to input 'http://localhost:9000/' on web page to use our system.
