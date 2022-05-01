@@ -1,7 +1,7 @@
 import org.apache.spark.sql._
 import org.apache.spark.mllib.recommendation.ALS
-import org.apache.spark.sql.types.LongType
 import com.mongodb.spark.MongoSpark
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 
 case class User(userId: Int, id: Int, purchase: Double)
@@ -73,18 +73,13 @@ object Als {
         case Rating(userId, id, purchase) => ((userId, id), purchase)
       }
 
-    val originAndPreds = test.map {
-      case (userId, id, purchase) => ((userId, id), purchase)
-    }.join(predictions)
+    val originAndPreds = createValidPrefData(test, predictions)
 
     val originAndPredDF = originAndPreds.map {
       case ((_1, _2), (_3, _4)) => (_1, _2, _3, _4)
     }.toDF("userId", "id", "purchase", "prediction")
 
-    val originAndPredsDF = originAndPredDF
-      .withColumn("prediction",
-        when(col("prediction") <= 0.12, 0.0)
-        .otherwise(1.0))
+    val originAndPredsDF = normalizePred(originAndPredDF)
 
     originAndPredsDF.show()
 
@@ -98,18 +93,12 @@ object Als {
     /**
      * Calculate MAD(Mean Absolute Deviation): 0.25% error
      */
-    val MAD = originAndPredsDF
-      .select(abs(originAndPredsDF("prediction") - originAndPredsDF("purchase")))
-      .toDF("product").agg(sum("product")/originAndPredsDF.count())
-      .first
-      .get(0)
-
-    println(MAD)
+    println(MAD(originAndPredsDF))
 
     /**
      * Statistical hypothesis testing：
-     * Recommended and interested: 1370
-     * Recommended but not interested: 1602
+     * cor: Recommended and interested
+     * err: Recommended but not interested
      */
 
     val cor = originAndPredsDF
@@ -124,6 +113,30 @@ object Als {
     println(err)
 
     spark.stop()
+  }
+
+  def createValidPrefData(test: RDD[(Int, Int, Double)], predictions: RDD[((Int, Int), Double)]): RDD[((Int, Int), (Double, Double))] ={
+    val originAndPreds = test.map {
+      case (userId, id, purchase) => ((userId, id), purchase)
+    }.join(predictions)
+    originAndPreds
+  }
+
+  def normalizePred(originAndPredDF: DataFrame): DataFrame = {
+    val originAndPredsDF = originAndPredDF
+      .withColumn("prediction",
+        when(col("prediction") <= 0.12, 0.0)
+          .otherwise(1.0))
+    originAndPredsDF
+  }
+
+  def MAD(originAndPredsDF: DataFrame): Any ={
+    val MAD = originAndPredsDF
+      .select(abs(originAndPredsDF("prediction") - originAndPredsDF("purchase")))
+      .toDF("product").agg(sum("product")/originAndPredsDF.count())
+      .first
+      .get(0)
+    MAD
   }
 
 }

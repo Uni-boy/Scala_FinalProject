@@ -1,7 +1,7 @@
 import org.apache.spark.sql._
-import org.apache.spark.mllib.recommendation.ALS
 import org.apache.spark.mllib.recommendation.MatrixFactorizationModel
 import com.mongodb.spark.MongoSpark
+import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.functions._
 
 case class UserData(userId: Int, id: Int, purchase: Double)
@@ -46,18 +46,13 @@ object Recommend{
         case Rating(userId, id, purchase) => ((userId, id), purchase)
       }
 
-    val originAndPreds = test.map {
-      case (userId, id, purchase) => ((userId, id), purchase)
-    }.join(predictions)
+    val originAndPreds = createValidPrefData(test, predictions)
 
     val originAndPredDF = originAndPreds.map {
       case ((_1, _2), (_3, _4)) => (_1, _2, _3, _4)
     }.toDF("userId", "id", "purchase", "prediction")
 
-    val originAndPredsDF = originAndPredDF
-      .withColumn("prediction",
-        when(col("prediction") <= 0.12, 0.0)
-          .otherwise(1.0))
+    val originAndPredsDF = normalizePred(originAndPredDF)
 
     val validPredict = originAndPredsDF.drop("purchase").filter($"prediction" === 1.0)
 
@@ -66,6 +61,23 @@ object Recommend{
      */
 
     MongoSpark.save(validPredict.write.option("collection", "testPred").mode("overwrite"))
+
+    spark.stop()
+  }
+
+  def createValidPrefData(test: RDD[(Int, Int, Double)], predictions: RDD[((Int, Int), Double)]): RDD[((Int, Int), (Double, Double))] ={
+    val originAndPreds = test.map {
+      case (userId, id, purchase) => ((userId, id), purchase)
+    }.join(predictions)
+    originAndPreds
+  }
+
+  def normalizePred(originAndPredDF: DataFrame): DataFrame = {
+    val originAndPredsDF = originAndPredDF
+      .withColumn("prediction",
+        when(col("prediction") <= 0.12, 0.0)
+          .otherwise(1.0))
+    originAndPredsDF
   }
 
 }
